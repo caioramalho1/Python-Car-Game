@@ -1,0 +1,28 @@
+Agora a intençao é dar fisica de momento ao carro, assim que o carro parar de acelerar ele tem que desacelerar aos poucos
+    def reduce_speed(self):
+        self.vel = max(self.vel - self.acceleration/2, 0)
+        self.move()
+
+OBS.: Entender as funcoes MAX e Min Quando chegar do trabalho hoje as 15/10 
+
+self.vel - self.acceleration/2 quando esse valor for negativo ( < 0), eu vou setar a velocidade para 0, porqu eu nao quero
+que o meu carro se mova para trás. A lógica da divisão por 2 é simplesmente achismo, a desaceleração do carro será a metade
+da aceleracao. 
+
+Então quando eu reduzir a velocidade com o reduce_speed, eu vou estar reduzindo a velocidade pela metade da aceleração
+e eu vou me mover com a funcao self.mvoe();
+
+
+Agora dentro do meu loop while run: Eu preciso fazer algum jeito da minha funcao reduce_speed() ser executada em algum 
+evento especifico
+
+Primeiramente dentro do laço for event in pygame.event.get():
+
+eu vou criar a variavel moved que vai começar por padrão em False, e dentro do meu comando de pressio nar tecla w, eu 
+vou enviar o moved = True, para que a minha velocidade nao seja decrementada no momento em que eu estiver apertando w;
+
+e dentro do laço de eventos eu vou executar um código que vai ser    
+    if not moved:
+        player_car.reduce_speed()
+Basicamente, se o moved for true, ele vai estar dentro da condiçao de w pressionado, se não, ele vai sempre estar como
+falso. Então, sempre que ele for falso a minha condiçao vai ser ativada e o codigo de reduce_speed vai ser executado

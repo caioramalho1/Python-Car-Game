@@ -1,0 +1,146 @@
+O principio será entendera diferença entre colisao de pixels e colisao perfeita de pixels. 
+Primeiro, entendo a colisao de pixels normal;
+
+Relembrando: Todos as imagens são retangulos no pygame, então, é possivel que visualmente as minhas imagens não estejam
+colidindo ainda, mas os retangulos já se encontraram, essa é a colisão normal. As imagens mesmo que nao sejam triangulos
+são completadas com pixels invisiveis em volta delas, para que formem um triangulo. A colisão basica é simplesmente checar
+se esses retangulos estão de fato, colidindo. 
+
+Para resolver o problema da colisão normal, que no caso os objetos estao colidindo por tras dos panos, mas nao estao
+na visualização, eu uso as mascaras. O que são as mascaras ? Um array de valores verificando se uma imagem tem 
+os pixeis transparentes ou se eles realmente existem. Basicamente, isso vai me permitir checar se PIXELS QUE NÃO SAO 
+TRANSPARENTES estão se sobrepondo em regioes de retangulos. 
+
+Para entender, imagine um grande array que representa uma imagem [[1,0] e esse array seria comparado com outro array
+                                                                  [0,1]]
+que seria [[0,0]
+           [0,1]]
+Para saber oque esta colidindo basta comparar os valores de dentro dos arrays, onde estiver 1 dos dois lados é onde 
+a imagem esta colidindo;
+
+Agora, no mundo real, é um pouco mais complicado porque eu preciso entender e saber onde estão a localização dessas 
+mascaras (arrays) dentro da minha imagem, antes de realizar a comparação para saber onde ocorre a colisao
+
+Eu preciso saber também onde está o meu offset(deslocamento) da minha mascaras para conseguir a localização
+
+Então aqui entram dois conceitos, o conceito do chamado da mascara e a mascara chamada, a mascara chamada é a que eu quero 
+encontrar, e o chamado é a mascara que eu tenho. Essas duas mascaras, a do chamado e a chamada, não estão no mesmo lugar
+exato, porém, estão referenciadas no canto superior esquerdo da superficie do retangulo. Então, eu consigo "alinha-las"
+calculando a diferença das cordenadas (x,y) usando como referencia o ponto superior esquerdo das duas. E quando
+eu conseguir alinhar essas duas mascaras, eu vou conseguir fazer o calculo de colisão das imagens. 
+
+
+Agora aplicando essa teoria explicada em código;
+Primeir: Eu vou precisar criar as minhas mascaras, a mascara sera criada a partir da imagme track-border que ue tenho
+nos meus arquivos. Vou criar uma constante para ela.
+Essa minha borda da pista de corrida, sera uma mascara que será comparada com a mascara do meu carro.
+Como o canto esquerdo da minha imagem de bordas é (0,0) será simples fazer o calculo de offset (deslocamento);
+
+TRACK_BORDER_MASK = pygame.mask.from_surface(TRACK_BORDER)
+Pronto, com isso eu consigo a mascara da minha pista.
+
+Agora eu vou precisar da mascara do meu carro, para isso eu vou dentro da minha classe AbstractCar, a razão por eu querer
+ir dentro dessa classe, é que eu vou precisar da mascara dos dois carros, a do jogador e do computador;
+
+def collide(self, mask, x=0, y=0):
+    car_mask = pygame.mask.from_surface(self.img) #ou seja, qualquer imagme que eu setei pro meu carro.
+    offset = (int(x - self.x), int(y - self.y)) 
+    poi = mask.overlap(car_mask, offset) #eu vou usar outra mascara como a "calling mask" que vai detectar como eu calculo
+#    a minha sobreposição
+    return poi
+
+    poi = ponto de intersecção
+    eu preciso que o meu deslocamento seja entregue em inteiros, a razão por estar fazendo o type
+    casting e porque eu posso ter valores flutuantes. ele esta recebendo o offset x e offset y
+
+    Lembrando que offset vai ser relativo a minha mascara chamada
+    A razão de estar usando esses valores como meu deslocamento (offset) "offset = (int(x - self.x), int(y - self.y))"
+    é porque a mascara chamada "poi = mask.overlap(car_mask, offset)" é a outra mascara que estou passando. Então eu vou
+    pegar a posição atual do meu x, qualquer que ela seja (self.x) e da mesma maneira a posição atual do meu y (self.y) e 
+    eu vou subtrair do x e y da outra mascara (a mascara chamada). A diferença entre as duas cordenadas irá me entregar
+    o deslocamento entre as duas mascaras. A mascara do meu carro e a mascara chamada. a poi
+
+    O "poi = mask.overlap(car_mask, offset)" vai me retornar o ponto de intersecção das duas mascaras, se existir algum
+
+    Agora para eu checar se os meus objetos estao colidindo, eu tenho que checar se o meu POI esta me retornando None ou 
+    nao. Se não houve colisão o POI vai ser NONE, se houve colisão, o POI vai me retornar que eles colidiram. OBS.: Nesse 
+    ponto eu não estou me importando com o local da colisão, simplesmente se eles colidiram ou não;
+
+    Para checar se houve colisão, eu vou dentro do meu loop principal while run:
+    E vou checar 
+    if player_car.collide(TRACK_BORDER) != None:
+        print("Collide")
+    Basicamente neste código eu vou checar se a colisão esta acontecendo, se ela estiver vai ser printado collide toda vez
+    no meu console.
+    Note que: Eu não preciso passar a posição aqui porque a minha track_border já está na posição (0,0)
+
+    Nesse momento, eu também ainda não desenhei a minha borda porque eu sei que ela vai estar na mesma exata
+    posição da pista de corrida original já desenhada. 
+
+
+    Agora um metodo para dar um ricochete (bounce) quando o meu carro entrar em contato com a borda
+
+    dentro do meu player_car eu vou criar um metodo chamado bounce para fazer isso.
+
+
+Com tudo isso pronto, agora eu posso criar a linha de chegada do meu programa
+
+O desafio de criar a linha de chegada, é descobrir em qual lado da linha de chegada eu estou para poder ser valida a corrida
+
+Para desenhar a finish line sera simples, basta eu criar uma posição para elas, que encaixara na minha pista
+depois de desenhar ela enviando ela com a tupla nas minhas images, eu desenho depois a border_track por cima dela
+para que a borda sobreponha a linha de chegada que vai ficar sobrepondo a borda.
+
+COLISAO COM A LINHA DE CHEGADA:
+Primeiramente eu vou precisar de uma mascara para a linha de chegada, para fazer novamente o calculo de deslocamento da
+mascara chamada com a mascara do chamado. 
+FINISH_MASK = pygame.mask.from_surface(FINISH)
+
+agora eu crio uma condição para saber quando foi colidido, assim como anteriormente, porém a diferença é que agora
+eu vou ter que enviar a posição da minha linha de chegada. Porque anteriormente, a posição da minha borda era (0,0)
+e por padrão o meu metodo collide foi criado com  as posições x=0 e y=0.
+if player_car.collide(FINISH_MASK, *FINISH_POSITION) != None:
+
+Note: enviar *FINISH_POSITION está desempacotando os valores da minha tupla, seria a mesma coisa que eu enviasse x=valor e 
+y = valor. o * splita a minha tupla. E passa ela como dois argumentos;
+
+Agora eu vou guardar essa condição em uma variavel e vou printar essa variavel, que vai se chamar finish_poi_collide
+que será basicamente os pontos de intersecção com a linha de chegada. e assim eu vou poder ter uma noçao dos pontos
+no plano onde o meu carro colide com a linha de chegada.
+
+finish_pio_collide = player_car.collide(FINISH_MASK, *FINISH_POSITION)
+if finish_pio_collide != None:
+    print(finish_pio_collide)
+
+O codigo ira me retornar as cordenadas nas quais são pontos de intersecçao entre o carro e a linha de chegada.
+O output desse código me deu a informação que mais proximo da extremidade superior da linha de chegada, o meu Y vale 
+0. Então eu posso checar quando o meu Y for 0 para saber quando eu passo na minha linha de chegada no sentido horario.
+
+    
+finish_pio_collide = player_car.collide(FINISH_MASK, *FINISH_POSITION)
+if finish_pio_collide != None:
+    if finish_pio_collide[1] == 0:
+        player_car.bounce()
+
+
+Agora que eu ja sei onde eu devo cruzar a linha de chegada, eu posso tomar alguma decisão para o meu jogo a partir disso
+
+dentro da minha classe abstrata eu vou criar um metodo de reset 
+
+def reset(self):
+    self.x, self.y = self.START_POS
+    self.angle = 0 
+    self.vel = 0
+e quando o meu  if finish_pio_collide[1] == 0: for diferente de 0 (o valor de y for diferente de 0)
+oque eu vou fazer é chamar o m meu metodo de reset para resetar a posição do meu carro
+
+O codigo implementado até o momento fica assim
+    finish_pio_collide = player_car.collide(FINISH_MASK, *FINISH_POSITION)
+    if finish_pio_collide != None:
+        if finish_pio_collide[1] == 0:
+            player_car.bounce()
+        else:
+            player_car.reset()
+
+Sempre que eu pasar pela minha linha de chegada e o meu y for diferente de 0 o meu carro vai resetar sua posição, angulo 
+e velocidade.

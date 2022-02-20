@@ -1,0 +1,143 @@
+class ComputerCar(AbstractCar):
+    IMG = WHITE_CAR
+    START_POS = (150, 150)
+    def __init__(self, max_vel, rotation_vel, path=[]) -> None:
+        super().__init__(max_vel, rotation_vel)
+
+a lista path vai ser uma lista de coordenadas que eu vou querer que o meu carro se mova.
+
+Vou criar um metodo dentro da classe que vai desenhar os pontos onde o meu carro está, para ser mais facil a visualização
+
+    def draw_point (self, win):
+        for point in self.path:
+            pygame.draw.circle(win,(255, 0, 0), point, 5) vou desenhar um circulo na minha tela (win) que vai 
+            ser vermelho RGB(255, 0, 0), o point é o centro do circulo que eu quero desenhar, e o 5 é o raio do circulo
+
+Agora eu vou criar um metodo que torne possivel eu desenhar um caminho e ele retorne as cordenadas deste caminho para mim
+para que eu não tenha que realizar isso tudo a mão
+
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            pos = pygame.mouse.get_pos()
+            computer_car.path.append(pos)
+
+        eu vou pegar todos as cordenadas de cada clique na tela e dar um appendo no meu parametro path que é uma lista, para
+        que seja possivel desenha-lo na tela e depois printar no terminal as cordenadas dos pontos, após isso, eu vou colocar
+        todas essas coordenadas dentro da minha constante PATH, que eu vou enviar como parametro agora pra minha funcao ao inves
+        de gerar os pontos desenhando eles. 
+
+A movimentação do carro passa por alguns problemas, como a velocidade em que o angulo esta virando e a direção na qual ele
+está virando. A partir do código a seguir eu vou tentar trazer o máximo de realidade para a movimentação angular do carro.
+Porem basicamente oque precisa ser entendio é que, eu vou precisar usar uma equação trigonometrica para conseguir a angulacao
+na qual o meu carro tem que apontar para ir em direção até o ponto desejado(pontos desenhados). Eu preciso desse angulo para 
+conseguir usar a minha funcao de movimento já criada que usa o angulo para se movimentar, e no caso do carro do computador 
+agora, eu já tenho a distancia que o meu carro vai se movimentar, que são os valores de X e Y, isso porque a movimentaçao
+vai ser no caso o x dele - o x da posição e com o y a mesma coisa. Só ira faltar o angulo. Para encontrar o angulo eu vou 
+usar a formula da tangente TOA -> Tangente(teta) 0 =  C.O/C.A Na qual, para descobrir o angulo ao invés da tangente, basta
+inverter o termo tangente de teta, no caso ele sera elevado a -1. O python já possuí um metodo para isso, que é math.atan()
+que me retorna o angulo da tangente. Enfim, vamos para o código, porque existem outras condições para movimentar o carro. 
+
+Primeiramente defini um metodo move dentro da minha classe do ComputerCar
+    def move(self):
+
+1)        if self.current_point >= len(self.path):
+            return
+
+2)            self.calculate_angle()
+
+3)            self.update_path_point()
+4)            super().move()
+
+1)essa primeira condicional existe para que o meu carro não movimente mais do que a quantidade de pontos que existem 
+dentro da constante PATH.
+
+2)Ainda vou escrever mas essa funcao vai calcular o angulo e mover o carro para a direção deste angulo
+
+3)Essa funcao vai checar se o meu carro deve se mover para o proximo ponto. Porque assim que nós chegarmos a um ponto que
+queremos, nós colidimos com ele e vamos querer ir para o proximo ponto.
+
+4)Estou chamando manualmente o metodo move que eu estou subscrevendo dentro do meu carro. 
+
+Criando o meu meto de calcular a angulaçao na qual o carro vai apontar
+    def calculate_angle(self):
+1)        target_x, target_y = self.path[self.current_point]
+2)        x_diff = target_x - self.x
+2)        y_diff = target_y - self.y
+
+3)        if y_diff == 0:
+3)            desired_radian_angle = math.pi/2 #90 graus
+4)        else: 
+4)            desired_radian_angle = math.atan(x_diff/y_diff)
+
+
+5)        if target_y > self.y:
+5)            desired_radian_angle += math.pi
+
+6)        difference_in_angle = self.angle - math.degrees(desired_radian_angle)
+6)        if difference_in_angle >= 180:
+6)            difference_in_angle -= 360
+
+7)        if difference_in_angle > 0:
+7)            self.angle -= min(self.rotation_vel, abs(difference_in_angle))
+7)        else:
+7)            self.angle += min(self.rotation_vel, abs(difference_in_angle))
+
+1) desempacotando os valores do x e do y em cada posição em que o meu carro estiver.
+2) Estou agora pegando a diferença entre o x e y que eu quero chegar (que no caso serao as coordenadas dos pontos do
+caminho do carro) e o meu x e y atual. Nessa conta de diferença eu nao estou me preocupando com o valor absoluto porque a 
+minha funcao tangencial no futuro irá cuidar de qualquer valor negativo que essas posiçoes receber.
+3)Essa condição existe porque a minha equaçao tangencial envolve a divisão pelo Y, então se ocorrer uma divisao por 0
+eu vou teria um erro, agora se caso a diferença entre a posiçao y do ponto e a posicao y do carro ser 0, o angulo simples-
+mente não vai se alterar, basta o carro continuar reto. 90 graus
+4) Agora é onde ocorre a minha equação normal, onde eu encontro o angulo no qual eu quero que o meu carro aponte. 
+
+5) tratando o primeiro erro discutido no paint, se o meu y desejado estiver abaixo do y da minha posiçao, isso significa
+que a movimentaçao do meu carro vai ser mais extrema para chegar até aquele ponto,  entao para resolver isso eu vou colocar
+o meu angulo em 180 que vai ser como se ele estivesse apontando para baixo. OBS.: Lembrando que os angulos de movimentacao
+vao ser sempre agudos, ou seja, 90 ou menos. 
+
+6) Estou calculando a diferença entre o angulo que eu estou com o angulo desejado, e baseado em se o resultado dessa 
+equaçao é positivo ou negativo eu vou saber se eu estou me movendo para direita ou para esquerda. 
+Agora aqui surge outro problema, caso a minha diferença seja maior do que 180º eu vou estar me movendo através de uma rota
+ineficiente, ou seja, o meu carro vai ter que rotacionar mais do que deveria no plano para ir até a direção desejada. Então
+isso significa que eu posso ir para a direção contraria. Pensa: A diferença entre os angulos é 220 graús, oque seria ineficiente
+eu me mover no sentido horário esses 220 graús, sendo que eu poderia mem over apenas 140 graús no sentido antihorario para
+chegar ao exato mesmo ponto, é isso que iremos tratar aqui. Para isso, caso o meu angulo seja maior do que 180, basta eu 
+subtrair esse anglo de 360, por exemplo 220 - 360, que irá me retornar 140 graús, que é a direção a qual eu tenho que me
+mover, e que tem que ser negativa porque será no sentido antihorario. 
+
+7) Código que vai de fato, fazer a rotação do meu carro na velocidade na qual ele deve ir e na direçao na qual ele deve ir.
+Note: Eu estou subtraindo o meu angulo atual do angulo desejado, no calculo da diferença em angulo. Se o resultado dela for
+negativo, menor que 0, isso significa que o meu carro tem que ir na direção oposta na qual ele deveria ir. A razão disso é 
+que quando eu vou para a esquerda, eu aumento o meu angulo, se o meu angulo já é maior do que o angulo desejado, eu devo
+me mover na posição oposta para chegar até aquele angulo. Então aqui self.angle -= min(self.rotation_vel, abs(difference_in_angle))
+eu estou diminuindo do meu angulo a diferença, porque eu tenho que ir para direita ao invés da esquerda. O minimo é para
+acertar o ponto exato onde o meu angulo está ao invés de ficar passando por ele. 
+
+
+Agora oque eu vou querer fazer é mudar par ao proximo ponto dentro do meu caminho, quando eu chegar em um certo ponto.
+
+    def update_path_point(self):
+1)        target = self.path[self.current_point]
+2)        rect = pygame.Rect(self.x, self.y, self.img.get_width(), self.img.get_height())
+3)        if rect.collidepoint(*target):
+4)            self.current_point += 1 
+Dentro dessa funcao oque eu vou fazer é checar a colisão com os pontos que eu tenho. 
+1)alocando os pontos do meu caminho em uma posição
+2)criando um retangulo a partir da posição do meu carro
+3) checando se a posição desse retangulo esta colidindo com a posição atual do carro.
+4) agora eu estou incrementando o meu ponto para o proximo ponto, assim que a minha condiçao for satisfeita. 
+
+Agora oque eu vou fazer é mover o meu carro:
+computer_car.move()
+
+
+Agora eu vou fazer a colisao do computador com a linha de chegada para saber quando o computador ganha
+
+primeiramente no meu metodo de colisao do carro com a linha de chegada do jogador, eu vou referenciar com um player antes
+porque eu vou fazer exatamente a mesma coisa para o computador. 
+
+computer_finish_pio_collide = computer_car.collide(FINISH_MASK, *FINISH_POSITION)
+
+
+Vou jogar todo o codigo de colisao dentro de uma funcao para refatorar o codigo
+

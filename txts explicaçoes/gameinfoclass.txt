@@ -1,0 +1,71 @@
+vou criar uma classe para as informaçoes relacionadas ao meu jogo
+
+class GameInfo:
+    LEVELS = 10
+    def __init__(self, level=1) -> None:
+        self.level = level
+        self.started = False
+        self.level_time_start = 0
+
+    def next_level(self):
+        self.level += 1
+        self.started = False
+
+    def reset(self):
+        self.level = 1
+        self.started = False
+        self.level_time_start = 0
+
+    def game_finished(self):
+        return self.level > self.LEVELS
+
+    def start_level(self):
+        self.started = True
+        self.level_time_start = time.time()
+
+    def get_level_time(self):
+        if not self.started:
+            return 0
+        
+        return self.level_time_start - time.time()
+
+
+OQue eu quero fazer ? Criar um trigger para fazer o meu jogo começar, como: pressione espaço para começar. 
+
+Vou fazer um loop dentro do meu while run e vou colocar todo o código que existia antes para fazer o carro se movimentar
+e etc, dentro desse loop para poder controlar caso alguem aperte a tecla. Se nao apertar o resto nao sera executado
+
+1)    while not game_info.started:
+
+1) Enquanto o jogo não tenha começado, ou seja, enquanto o started seja falso, eu vou fazer algo, no caso, imprimir
+algumas imagens na tela. 
+
+Vou criar uma funcao para escrever coisas na tela, para escrever coisas na tela eu vou precisar criar uma FONT
+ela precisa ser criada no inicio do meu código.
+
+pygame.font.init()
+
+Após isso eu vou definir um objeto font. Esse objeto font é o que vai me permitir renderizar texto. 
+
+dentro da minha pasta de utilidades:
+def blit_text_center(win, font, text):
+    render = font.render(text, 1(200, 200, 200)) #texto que eu quero renderizar, o antiallising que vai ser sempre 1, e a cor 
+    win.blit(render, (win.get_width()/2, - render.get_width(), win.get_height()))
+
+OBS.:eu quero que o meu texto seja renderizado no canto superior e assim completar a tela. Lembrando que todas 
+as imagens são localizadas pelo canto superior esquerdo. Essa funcao esta basicamente definindo o meio da minha tela.
+
+
+Agora voltando para o meu loop
+    while not game_info.started:
+        blit_text_center(WIN, MAIN_FONT,f"Press any key to start level {game_info.level}!")
+        pygame.display.update()
+        for event in pygame.event.get():        
+            if event.type == pygame.QUIT:
+                run = False
+                break
+        
+        if event.type == pygame.KEYDOWN: #assim que alguma tecla for pressionada o python saira do loop e ira 
+        continuar o código.
+            game_info.start_level()
+

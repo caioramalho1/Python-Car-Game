@@ -1,0 +1,34 @@
+Pensando em um plano cartesiano. É facil mover o meu objeto(carro/retangulo) para as direções polares
+para cima eu simplesmente aumento o meu y e para baixo eu diminuo meu y, e para direita eu aumento meu x
+e para esquerda eu diminuo meu x. Porém, eu preciso pensar em alguma maneira de resolver o problema quando
+eu me movo para duas direçoes ao mesmo tempo, como na diagonal, porque nesse caso, a velocidade não vai ser linear, 
+se a velocidade do carro estava em 4 e eu me mover em 2 direçoes ao mesmo tempo, a velocidade vai ser algum tipo de mix
+que inclui essas duas velocidades. Então eu preciso pensar em algum jeito de resolver esse problema: 
+
+Se eu tirar uma parte do meu plano cartesiano na qual eu movimento o meu carro para a direita por exemplo, eu posso
+transforma-lo em um triangulo retangulo para definir o valor da velocidade, visto que eu vou separar o meu triangulo 
+retangulo em: hipotenusa vai ser a velocidade, o y vai ser o cateto oposto e x vai ser o cateto adjacente. E o calculo
+só será possível, porque eu possuo o angulho que esta na origem;
+
+SOH -> Seno 0(teta) = C.O/Hipotenusa
+CAH -> Cos 0(teta) = C.A/Hipotenusa
+TOA -> Tangente(teta) 0 =  C.O/C.A
+
+Como ja dito, no meu caso, supondo que eu ja tenho o valor do angulo e eu ja tenho o valor da minha velocidade, eu
+primeiramente vou fazer o calculo do seno para descobrir o Y (CATETO Oposto), que sera Seno 0º = C.O/H (Velocidade)
+4 * Sen 0 = C.O (Y)
+
+Fazendo esses calculos eu vou conseguir chegar a um valor de x e y que vão ser a velociade do meu objeto quando
+ele estiver andando no plano. Vou usar essa lógica no código; OBS.: Vai ser na minha funcao move()
+
+def move(self):
+        radians = math.radians(self.angle)
+        vertical = math.cos(radians) * self.vel
+        horizontal = math.sin(radians) * self.vel
+
+        self.y -= vertical
+        self.x -= horizontal
+
+        Normalmente, se eu estiver me movendo para a direita, o valor retornado do calculo da vertical e horizontal, são negativos
+        e se eu estiver me movendo para a esquerda, o resultado retornado é positivo, por isso eu vou precisar colocar
+        o sinal negativo na equaçao self.y, self.x -= vertical, horizontal. 
